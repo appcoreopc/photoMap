@@ -61,25 +61,23 @@ export default class HomeScreen extends React.Component {
     } = this.state;
 
     return (
-      <View style={styles.container}>
+      <View style={styles.tabBarInfoContainer}>           
+    
         <StatusBar barStyle="default" />
 
-        <Text
-          style={styles.exampleText}>
-          Example: Upload ImagePicker result
-        </Text>
+       
 
         <Button
           onPress={this._pickImage}
-          title="Pick an image from camera roll"
+          title="Pick an image"
         />
 
         <Button onPress={this._takePhoto} title="Take a photo" />
 
         {this._maybeRenderImage()}
         {this._maybeRenderUploadingOverlay()}
-      </View>
 
+      </View>
 
 
     );
