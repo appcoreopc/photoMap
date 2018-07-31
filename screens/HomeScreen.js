@@ -1,9 +1,14 @@
 import React from 'react';
-import { Ionicons, MaterialIcons, Foundation, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
-import { Image, Platform, ScrollView, StyleSheet, Text, Button, TouchableOpacity, View } from 'react-native';
-import { Camera, Permissions, FileSystem } from 'expo';
-import { MonoText } from '../components/StyledText';
 
+import { Ionicons, MaterialIcons, Foundation, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
+import { ActivityIndicator, Button, Clipboard, Image,
+  Share,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View } from 'react-native';
+import { Constants, ImagePicker, Permissions } from 'expo';
 export default class HomeScreen extends React.Component {
   
   static navigationOptions = {
@@ -11,8 +16,24 @@ export default class HomeScreen extends React.Component {
   };
   
   state = {
-    hasCameraPermission: null,
-    type: Camera.Constants.Type.back,
+    image: null,
+    uploading: false,
+  };
+
+  _pickImage = async () => {
+    const {
+      status: cameraRollPerm
+    } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+    // only if user allows permission to camera roll
+    if (cameraRollPerm === 'granted') {
+      let pickerResult = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+      });
+
+      this._handleImagePicked(pickerResult);
+    }
   };
   
   async componentWillMount() {
@@ -33,158 +54,139 @@ export default class HomeScreen extends React.Component {
     });
     this.setState({ newPhotos: true });
   }
-  
+
   render() {
-    
-    const { hasCameraPermission } = this.state;
-    if (hasCameraPermission === null) {
-      return <View />;
-    } else if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
-    } else {
-      return (
-        <View style={{ flex: 1 }}>
-        <Camera style={{ flex: 1 }} type={this.state.type} ref={ref => { this.camera = ref; }}>
-        </Camera>
-        
-        <View style={styles.tabBarInfoContainer}>
-            <Button onPress={() => {
-              this.setState({
-                type: this.state.type === Camera.Constants.Type.back
-                ? Camera.Constants.Type.front : Camera.Constants.Type.back,});
-              }} title="Flip" color="#efefef" accessibilityLabel="Learn more about this purple button"/>
-              
-              <Button onPress={this.takePicture} title="Snap" color="#ededed" accessibilityLabel="Learn more about this purple button"/>
-          </View>
-          </View>
-          
-        )};
-        
-      }
-      
-      _maybeRenderDevelopmentModeWarning() {
-        if (__DEV__) {
-          const learnMoreButton = (
-            <Text onPress={this._handleLearnMorePress} style={styles.helpLinkText}>
-            Learn more
-            </Text>
-          );
-          
-          return (
-            <Text style={styles.developmentModeText}>
-            Development mode is enabled, your app will be slower but you can use useful development
-            tools. {learnMoreButton}
-            </Text>
-          );
-        } else {
-          return (
-            <Text style={styles.developmentModeText}>
-            You are not in development mode, your app will run at full speed.
-            </Text>
-          );
-        }
-      }
-      
-      _handleLearnMorePress = () => {
-        WebBrowser.openBrowserAsync('https://docs.expo.io/versions/latest/guides/development-mode');
-      };
-      
-      _handleHelpPress = () => {
-        WebBrowser.openBrowserAsync(
-          'https://docs.expo.io/versions/latest/guides/up-and-running.html#can-t-see-your-changes'
-        );
-      };
+    let {
+      image
+    } = this.state;
+
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="default" />
+
+        <Text
+          style={styles.exampleText}>
+          Example: Upload ImagePicker result
+        </Text>
+
+        <Button
+          onPress={this._pickImage}
+          title="Pick an image from camera roll"
+        />
+
+        <Button onPress={this._takePhoto} title="Take a photo" />
+
+        {this._maybeRenderImage()}
+        {this._maybeRenderUploadingOverlay()}
+      </View>
+    );
+  }
+  
+  _takePhoto = async () => {
+    const {
+      status: cameraPerm
+    } = await Permissions.askAsync(Permissions.CAMERA);
+
+    const {
+      status: cameraRollPerm
+    } = await Permissions.askAsync(Permissions.CAMERA_ROLL);
+
+    // only if user allows permission to camera AND camera roll
+    if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
+      let pickerResult = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+      });
+
+      this._handleImagePicked(pickerResult);
     }
+  };
+  
+  _maybeRenderImage = () => {
+      let {
+        image
+      } = this.state;
+  
+      if (!image) {
+        return;
+      }
+  
+      return (
+        <View
+          style={styles.maybeRenderContainer}>
+          <View
+            style={styles.maybeRenderImageContainer}>
+            <Image source={{ uri: image }} style={styles.maybeRenderImage} />
+          </View>
+  
+          <Text
+            onPress={this._copyToClipboard}
+            onLongPress={this._share}
+            style={styles.maybeRenderImageText}>
+            {image}
+          </Text>
+        </View>
+      );
+    };
+
+    _maybeRenderUploadingOverlay = () => {
+      if (this.state.uploading) {
+        return (
+          <View
+            style={[StyleSheet.absoluteFill, styles.maybeRenderUploading]}>
+            <ActivityIndicator color="#fff" size="large" />
+          </View>
+        );
+      }
+    };
     
-    const styles = StyleSheet.create({
-      container: {
-        flex: 1,
-        backgroundColor: '#fff',
-      },
-      developmentModeText: {
-        marginBottom: 20,
-        color: 'rgba(0,0,0,0.4)',
-        fontSize: 14,
-        lineHeight: 19,
-        textAlign: 'center',
-      },
-      contentContainer: {
-        paddingTop: 30,
-      },
-      welcomeContainer: {
-        alignItems: 'center',
-        marginTop: 10,
-        marginBottom: 20,
-      },
-      welcomeImage: {
-        width: 100,
-        height: 80,
-        resizeMode: 'contain',
-        marginTop: 3,
-        marginLeft: -10,
-      },
-      getStartedContainer: {
-        alignItems: 'center',
-        marginHorizontal: 50,
-      },
-      homeScreenFilename: {
-        marginVertical: 7,
-      },
-      codeHighlightText: {
-        color: 'rgba(96,100,109, 0.8)',
-      },
-      codeHighlightContainer: {
-        backgroundColor: 'rgba(0,0,0,0.05)',
-        borderRadius: 3,
-        paddingHorizontal: 4,
-      },
-      getStartedText: {
-        fontSize: 17,
-        color: 'rgba(96,100,109, 1)',
-        lineHeight: 24,
-        textAlign: 'center',
-      },
-      tabBarInfoContainer: {
-        flex : 1, 
-        flexDirection : 'row',
-        justifyContent : 'space-evenly',
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        ...Platform.select({
-          ios: {
-            shadowColor: 'black',
-            shadowOffset: { height: -3 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-          },
-          android: {
-            elevation: 20,
-          },
-        }),
-        alignItems: 'stretch',
-        backgroundColor: '#fbfbfb',
-        paddingVertical: 20,
-      },
-      tabBarInfoText: {
-        fontSize: 17,
-        color: 'rgba(96,100,109, 1)',
-        textAlign: 'center',
-      },
-      navigationFilename: {
-        marginTop: 5,
-      },
-      helpContainer: {
-        marginTop: 15,
-        alignItems: 'center',
-      },
-      helpLink: {
-        paddingVertical: 15,
-      },
-      helpLinkText: {
-        fontSize: 14,
-        color: '#2e78b7',
-      },
-    });
     
+
+
+}   
+
+    
+const styles = StyleSheet.create({
+  container: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  exampleText: {
+    fontSize: 20,
+    marginBottom: 20,
+    marginHorizontal: 15,
+    textAlign: 'center',
+  },
+  maybeRenderUploading: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+  },
+  maybeRenderContainer: {
+    borderRadius: 3,
+    elevation: 2,
+    marginTop: 30,
+    shadowColor: 'rgba(0,0,0,1)',
+    shadowOpacity: 0.2,
+    shadowOffset: {
+      height: 4,
+      width: 4,
+    },
+    shadowRadius: 5,
+    width: 250,
+  },
+  maybeRenderImageContainer: {
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
+    overflow: 'hidden',
+  },
+  maybeRenderImage: {
+    height: 250,
+    width: 250,
+  },
+  maybeRenderImageText: {
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  }
+});
