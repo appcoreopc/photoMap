@@ -48,16 +48,13 @@ export default class HomeScreen extends React.Component {
         </Camera>
         
         <View style={styles.tabBarInfoContainer}>
-        
-        <Button onPress={() => {
-          this.setState({
-            type: this.state.type === Camera.Constants.Type.back
-            ? Camera.Constants.Type.front : Camera.Constants.Type.back,});
-          }} title="Flip" color="#efefef" accessibilityLabel="Learn more about this purple button"/>
-          
-          <Button onPress={this.takePicture} title="Snap" color="#ededed" accessibilityLabel="Learn more about this purple button"/>
-          
-          
+            <Button onPress={() => {
+              this.setState({
+                type: this.state.type === Camera.Constants.Type.back
+                ? Camera.Constants.Type.front : Camera.Constants.Type.back,});
+              }} title="Flip" color="#efefef" accessibilityLabel="Learn more about this purple button"/>
+              
+              <Button onPress={this.takePicture} title="Snap" color="#ededed" accessibilityLabel="Learn more about this purple button"/>
           </View>
           </View>
           
