@@ -2,6 +2,11 @@ import React from 'react';
 import { ExpoConfigView } from '@expo/samples';
 import { Permissions, Notifications } from 'expo';
 
+
+// https://expo.io/dashboard/notifications - test 
+// documentation 
+// https://docs.expo.io/versions/v29.0.0/guides/push-notifications
+
 export default class SettingsScreen extends React.Component {
   static navigationOptions = {
     title: 'app.json',
