@@ -2,7 +2,7 @@ import React from 'react';
 
 import { Ionicons, MaterialIcons, Foundation, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { ActivityIndicator, Button, Clipboard, Image,
-  Share,
+  Share, Platform,
   StatusBar,
   StyleSheet,
   Text,
@@ -79,6 +79,9 @@ export default class HomeScreen extends React.Component {
         {this._maybeRenderImage()}
         {this._maybeRenderUploadingOverlay()}
       </View>
+
+
+
     );
   }
   
@@ -138,15 +141,35 @@ export default class HomeScreen extends React.Component {
           </View>
         );
       }
-    };
-    
-    
-
-
-}   
+    };    
+  
+  }   
 
     
 const styles = StyleSheet.create({
+  tabBarInfoContainer: {
+    flex : 1, 
+    flexDirection : 'row',
+    justifyContent : 'space-evenly',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    ...Platform.select({
+      ios: {
+        shadowColor: 'black',
+        shadowOffset: { height: -3 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 20,
+      },
+    }),
+    alignItems: 'stretch',
+    backgroundColor: '#fbfbfb',
+    paddingVertical: 20,
+  },
   container: {
     alignItems: 'center',
     flex: 1,
