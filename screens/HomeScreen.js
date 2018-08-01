@@ -1,15 +1,15 @@
 import React from 'react';
-
 import { Ionicons, MaterialIcons, Foundation, MaterialCommunityIcons, Octicons } from '@expo/vector-icons';
 import { ActivityIndicator, Button, Clipboard, Image,
   Share, Platform,
   StatusBar,
   StyleSheet,
-  Text,
+  Text, TextInput,
   TouchableOpacity,
   View } from 'react-native';
-import { Constants, ImagePicker, Permissions } from 'expo';
+import { Constants, ImagePicker, Permissions, Alert } from 'expo';
 export default class HomeScreen extends React.Component {
+  
   
   static navigationOptions = {
     header: null,
@@ -20,6 +20,7 @@ export default class HomeScreen extends React.Component {
     uploading: false,
   };
 
+
   _pickImage = async () => {
     const {
       status: cameraRollPerm
@@ -28,14 +29,14 @@ export default class HomeScreen extends React.Component {
     // only if user allows permission to camera roll
     if (cameraRollPerm === 'granted') {
       let pickerResult = await ImagePicker.launchImageLibraryAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
+        allowsEditing: false,
+        //aspect: [4, 3],
       });
 
       this._handleImagePicked(pickerResult);
     }
   };
-  
+ 
   async componentWillMount() {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === 'granted' });
@@ -62,10 +63,8 @@ export default class HomeScreen extends React.Component {
 
     return (
       <View style={styles.tabBarInfoContainer}>           
-    
+      
         <StatusBar barStyle="default" />
-
-       
 
         <Button
           onPress={this._pickImage}
@@ -78,12 +77,23 @@ export default class HomeScreen extends React.Component {
         {this._maybeRenderUploadingOverlay()}
 
       </View>
-
-
     );
   }
-  
+
   _takePhoto = async () => {
+
+    await Alert.alert(
+      'Alert Title',
+      'My Alert Msg',
+      [
+        {text: 'Ask me later', onPress: () => console.log('Ask me later pressed')},
+        {text: 'Cancel', onPress: () => console.log('Cancel Pressed'), style: 'cancel'},
+        {text: 'OK', onPress: () => console.log('OK Pressed')},
+      ],
+      { cancelable: false }
+    )
+
+
     const {
       status: cameraPerm
     } = await Permissions.askAsync(Permissions.CAMERA);
@@ -95,10 +105,11 @@ export default class HomeScreen extends React.Component {
     // only if user allows permission to camera AND camera roll
     if (cameraPerm === 'granted' && cameraRollPerm === 'granted') {
       let pickerResult = await ImagePicker.launchCameraAsync({
-        allowsEditing: true,
-        aspect: [4, 3],
+        //allowsEditing: true,
+        //aspect: [4, 3],
       });
 
+      
       this._handleImagePicked(pickerResult);
     }
   };
@@ -140,9 +151,74 @@ export default class HomeScreen extends React.Component {
         );
       }
     };    
-  
-  }   
 
+
+    _handleImagePicked = async pickerResult => {
+    
+      let uploadResponse, uploadResult;
+
+      
+  
+      try {
+        this.setState({
+          uploading: true
+        });
+  
+        if (!pickerResult.cancelled) {
+          uploadResponse = await uploadImageAsync(pickerResult.uri);
+          uploadResult = await uploadResponse.json();
+  
+          this.setState({
+            image: uploadResult.location
+          });
+        }
+      } catch (e) {
+        console.log({ uploadResponse });
+        console.log({ uploadResult });
+        console.log({ e });
+        alert('Upload failed, sorry :(');
+      } finally {
+        this.setState({
+          uploading: false
+        });
+      }
+    };
+  
+    async uploadImageAsync(uri) {
+      let apiUrl = 'https://file-upload-example-backend-dkhqoilqqn.now.sh/upload';
+    
+      // Note:
+      // Uncomment this if you want to experiment with local server
+      //
+      // if (Constants.isDevice) {
+      //   apiUrl = `https://your-ngrok-subdomain.ngrok.io/upload`;
+      // } else {
+      //   apiUrl = `http://localhost:3000/upload`
+      // }
+    
+      let uriParts = uri.split('.');
+      let fileType = uriParts[uriParts.length - 1];
+    
+      let formData = new FormData();
+      formData.append('photo', {
+        uri,
+        name: `photo.${fileType}`,
+        type: `image/${fileType}`,
+      });
+    
+      let options = {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'multipart/form-data',
+        },
+      };
+    
+      return fetch(apiUrl, options);
+    }
+ 
+  }   
     
 const styles = StyleSheet.create({
   tabBarInfoContainer: {
