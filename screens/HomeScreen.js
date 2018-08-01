@@ -7,7 +7,7 @@ import { ActivityIndicator, Button, Clipboard, Image,
   Text, TextInput,
   TouchableOpacity,
   View } from 'react-native';
-  import { Constants, ImagePicker, Permissions, Alert } from 'expo';
+  import { Constants, ImagePicker, Permissions } from 'expo';
   import { Icon } from 'react-native-elements'
   
   
